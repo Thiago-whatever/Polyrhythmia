@@ -7,7 +7,8 @@ import tensorflow as tf
 from tensorflow.keras import callbacks as KCB
 from tensorflow.keras.optimizers import Adam
 
-from modeling.model_lstm import build_lstm_model, perplexity
+#from modeling.model_lstm import build_lstm_model, perplexity
+from src.modeling.model_lstm import build_lstm_model, perplexity
 
 def set_seeds(seed=42):
     import os, random
@@ -93,11 +94,11 @@ def main(
     final_path.parent.mkdir(parents=True, exist_ok=True)
 
     ckpt_cb = KCB.ModelCheckpoint(
-        filepath=str(ckpt_dir / "best.keras"),
-        monitor="val_loss",
-        save_best_only=True,
-        save_weights_only=False,
-    )
+         filepath=str(ckpt_dir / "best.h5"),
+         monitor="val_loss",
+         save_best_only=True,
+         save_weights_only=False,
+     )
     es_cb = KCB.EarlyStopping(
         monitor="val_loss",
         patience=7,
@@ -121,7 +122,7 @@ def main(
 
     # 9) Guardar mejor modelo en models/final/
     # Copiamos/borramos y guardamos final
-    best_model = tf.keras.models.load_model(ckpt_dir / "best.keras", custom_objects={"perplexity": perplexity})
+    best_model = tf.keras.models.load_model(ckpt_dir / "best.h5", custom_objects={"perplexity": perplexity})
     best_model.save(final_path)
     print(f"[OK] Modelo final guardado en: {final_path}")
 
@@ -141,7 +142,7 @@ if __name__ == "__main__":
     ap.add_argument("--batch_size", type=int, default=32)
     ap.add_argument("--epochs", type=int, default=50)
     ap.add_argument("--ckpt_dir", default="models/checkpoints")
-    ap.add_argument("--final_path", default="models/final/best.keras")
+    ap.add_argument("--final_path", default="models/final/best.h5")
     args = ap.parse_args()
 
     main(

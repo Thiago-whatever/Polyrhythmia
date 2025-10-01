@@ -1,0 +1,17 @@
+dataset:
+  source: "manual"            # "manual" | "tfds"
+  root: "./data"              # raíz local de datos
+  gmd_zip: "./data/raw/groove-v1.0.0-midionly.zip"
+  gmd_unzip_dir: "./data/raw/groove/"
+  use_time_signature: "4/4"   # filtra compás
+  styles: ["jazz", "choro", "bossa", "samba", "hiphop", "afrocuban"]
+  keep_only_selected_styles: false   # true si quieres filtrar estrictamente
+  bars_per_sample: 1
+  steps_per_bar: 16
+  save_token_vocab: "./data/processed/vocab.json"
+
+splits:
+  use_info_csv: true          # usa split propuesto por GMD
+  train_out: "./data/processed/train.npz"
+  val_out: "./data/processed/val.npz"
+  test_out: "./data/processed/test.npz"

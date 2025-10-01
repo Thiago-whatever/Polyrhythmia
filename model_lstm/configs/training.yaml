@@ -1,0 +1,33 @@
+model:
+  embedding_dim: 64
+  lstm_units: [128, 128]
+  dropout: 0.2
+  recurrent_dropout: 0.2
+
+vocab:
+  pad_token_id: 0             
+  silence_token_id: 1         
+  max_vocab_size: null        
+
+conditioning:
+  num_styles: 6               # Jazz, Choro, Bossa, Samba, HipHop, AfroCuban
+  inject_mode: "concat"       # cómo se concatena estilo al embedding
+
+train:
+  batch_size: 32
+  epochs: 50
+  learning_rate: 0.001
+  optimizer: "adam"
+  loss: "sparse_categorical_crossentropy"
+  metrics: ["sparse_categorical_accuracy"]
+  early_stopping:
+    monitor: "val_loss"
+    patience: 7
+  checkpoint:
+    dir: "./models/checkpoints"
+    monitor: "val_loss"
+    save_best_only: true
+
+sampling:
+  temperature: 0.9
+  top_k: 10

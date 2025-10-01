@@ -112,7 +112,7 @@ def make_XY_from_bars(bars_encoded):
         X.append(seq.copy())
         # objetivo autoregresivo: predicción del siguiente evento
         # aquí creamos Y como la misma secuencia desplazada a la izquierda,
-        # y el último target será el propio último token (o puedes usar token <EOS> si defines uno)
+        # y el último target será el propio último token
         Y.append(np.concatenate([seq[1:], seq[-1:]]))
     return np.stack(X), np.stack(Y)
 
@@ -180,7 +180,7 @@ def main(groove_dir: Path, out_dir: Path, steps_per_bar=16, save_vocab=True):
         bars_encoded = [encode_tokens(tokens_16, vocab) for tokens_16 in bars_bitmasks]
         X, Y = make_XY_from_bars(bars_encoded)
 
-        # (Opcional) vector de estilos g: si no hay mapeo en info.csv, guarda dummy ceros
+        # Vector de estilos g: si no hay mapeo en info.csv, guarda dummy ceros
         # shape (N, 6) -> Jazz, Choro, Bossa, Samba, HipHop, AfroCuban
         G = np.zeros((X.shape[0], 6), dtype=np.float32)
 

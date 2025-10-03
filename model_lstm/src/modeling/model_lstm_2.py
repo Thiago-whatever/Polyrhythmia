@@ -2,18 +2,21 @@
 import tensorflow as tf
 from tensorflow.keras import layers as L, regularizers as R, losses as KLoss
 
-def categorical_crossentropy_ls(ls=0.05):
-    # label smoothing para sparse CE
-    def _loss(y_true, y_pred):
-        # y_true: (B, T) int; y_pred: (B, T, V)
-        # convertimos a one-hot y aplicamos smoothing
+import keras
+
+@keras.saving.register_keras_serializable(package="Custom")
+class SparseCELS(tf.keras.losses.Loss):
+    """Sparse Categorical Cross-Entropy con label smoothing (serializable)."""
+    def __init__(self, ls=0.05, name="sparse_ce_ls"):
+        super().__init__(name=name)
+        self.ls = ls
+
+    def call(self, y_true, y_pred):
         V = tf.shape(y_pred)[-1]
         y_true_oh = tf.one_hot(tf.cast(y_true, tf.int32), depth=V)
-        y_true_ls = (1.0 - ls) * y_true_oh + ls / tf.cast(V, tf.float32)
-        # CE
+        y_true_ls = (1.0 - self.ls) * y_true_oh + self.ls / tf.cast(V, tf.float32)
         ce = -tf.reduce_sum(y_true_ls * tf.math.log(tf.clip_by_value(y_pred, 1e-7, 1.0)), axis=-1)
         return tf.reduce_mean(ce)
-    return _loss
 
 def perplexity(y_true, y_pred):
     # y_pred ya softmax; ppx = exp(loss)
@@ -47,7 +50,7 @@ def build_lstm_model_2(
 
     tokE = L.Embedding(input_dim=vocab_size, output_dim=token_emb, name="tok_emb")(tokens_in)
     posE = L.Embedding(input_dim=seq_len + 1, output_dim=pos_emb, name="pos_emb")(pos_in)  # 1..16
-    
+
     # Proyección lineal del vector de estilos y repetición a T pasos
     style_proj = L.Dense(style_dim, activation="linear", name="style_proj")(style_in)     # (B, style_dim)
     style_rep  = L.RepeatVector(seq_len, name="style_tiled")(style_proj)  
@@ -70,7 +73,9 @@ def build_lstm_model_2(
     opt = tf.keras.optimizers.Adam(learning_rate=1e-3, clipnorm=clipnorm)
     model.compile(
         optimizer=opt,
-        loss=categorical_crossentropy_ls(label_smoothing),
+        loss=SparseCELS(ls=label_smoothing), 
         metrics=["sparse_categorical_accuracy", perplexity],
     )
+
+
     return model

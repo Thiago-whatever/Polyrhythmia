@@ -6,6 +6,7 @@ from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau, CSVLogg
 
 from src.modeling.model_lstm_2 import build_lstm_model_2 as build_lstm_model
 from src.metrics.rythm_metrics import perplexity
+from src.modeling.model_lstm_2 import SparseCELS 
 
 
 def load_npz(path):
@@ -158,8 +159,9 @@ def main(
     # eval
     best = tf.keras.models.load_model(
         P.Path(ckpt_dir) / "best_2.h5",
-        custom_objects={"perplexity": perplexity}
+        custom_objects={"perplexity": perplexity, "SparseCELS": SparseCELS}
     )
+
     test_metrics = best.evaluate(
         {"tokens": X_te, "pos": pos_te, "style": style_te}, Y_te, verbose=1
     )

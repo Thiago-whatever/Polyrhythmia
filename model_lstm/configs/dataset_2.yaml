@@ -1,0 +1,17 @@
+dataset:
+  name: groove-v1.0.0-midionly
+  path: data/processed/
+  train: data/processed/dataset_2/train.npz
+  val:   data/processed/dataset_2/validation.npz
+  test:  data/processed/dataset_2/test.npz
+  vocab: data/processed/dataset_2/vocab.json
+  max_seq_len: 16
+  num_classes: 0 
+  augmentation:
+    bar_shift: true    # rotaciones del compás
+    swap_instruments: true   # ride↔crash, toms cercanos
+    prob_swap: 0.05
+    rotate_times: 3
+    swap_pairs:          # swaps ligeros
+      - [ride, crash]
+      - [tom_mid, tom_high]

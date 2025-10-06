@@ -1,4 +1,5 @@
 import numpy as np
+import tensorflow as tf
 
 def tokens_to_multihot(seq, vocab_map, n_instruments=9):
     """

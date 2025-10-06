@@ -7,16 +7,24 @@ import keras
 @keras.saving.register_keras_serializable(package="Custom")
 class SparseCELS(tf.keras.losses.Loss):
     """Sparse Categorical Cross-Entropy con label smoothing (serializable)."""
-    def __init__(self, ls=0.05, name="sparse_ce_ls"):
-        super().__init__(name=name)
+    def __init__(self, ls=0.05, reduction=tf.keras.losses.Reduction.AUTO, name="sparse_ce_ls"):
+        super().__init__(reduction=reduction, name=name)
         self.ls = ls
 
     def call(self, y_true, y_pred):
         V = tf.shape(y_pred)[-1]
         y_true_oh = tf.one_hot(tf.cast(y_true, tf.int32), depth=V)
         y_true_ls = (1.0 - self.ls) * y_true_oh + self.ls / tf.cast(V, tf.float32)
-        ce = -tf.reduce_sum(y_true_ls * tf.math.log(tf.clip_by_value(y_pred, 1e-7, 1.0)), axis=-1)
+        ce = -tf.reduce_sum(
+            y_true_ls * tf.math.log(tf.clip_by_value(y_pred, 1e-7, 1.0)),
+            axis=-1
+        )
         return tf.reduce_mean(ce)
+
+    def get_config(self):
+        config = super().get_config()
+        config.update({"ls": self.ls})
+        return config
 
 def perplexity(y_true, y_pred):
     # y_pred ya softmax; ppx = exp(loss)

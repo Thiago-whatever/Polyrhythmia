@@ -39,11 +39,11 @@ def build_lstm_model_2(
     pos_emb: int = 16,
     lstm_units1: int = 384,
     lstm_units2: int = 384,
-    l2_dense: float = 1e-5,
-    dropout: float = 0.3,
+    l2_dense: float = 2e-5, #1e-5,
+    dropout: float = 0.35, #0.3,
     recurrent_dropout: float = 0.1,
     clipnorm: float = 1.0,
-    label_smoothing: float = 0.05,
+    label_smoothing: float = 0.10, # 0.05,
     seq_len: int = 16,
 ):
     """

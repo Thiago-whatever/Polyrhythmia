@@ -1,0 +1,15 @@
+dataset:
+  name: groove-v1.0.0-midionly
+  train: data/processed/dataset_3/train.npz
+  val:   data/processed/dataset_3/validation.npz
+  test:  data/processed/dataset_3/test.npz
+  vocab: data/processed/dataset_3/vocab.json
+  max_seq_len: 16
+  # Activamos augment “light”
+  augmentation:
+    bar_shift: true
+    swap_instruments: true
+    prob_swap: 0.10
+    rotate_times: 3
+  # Etiquetas de estilo (vector multi-hot de longitud 6)
+  styles: ["jazz","bossa","samba","hiphop","afrocubano","choro"]

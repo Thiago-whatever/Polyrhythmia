@@ -101,6 +101,17 @@ def encode_tokens(tokens_16, vocab):
     """tokens_16: lista de 16 bitmasks. Devuelve np.array shape (16,) con ids."""
     return np.array([vocab[bm] for bm in tokens_16], dtype=np.int32)
 
+def infer_style_from_path(path_str: str):
+    p = path_str.lower()
+    # Ajusta los patrones a tus carpetas reales:
+    if "jazz" in p or "swing" in p: return ["jazz"]
+    if "bossa" in p: return ["bossa"]
+    if "samba" in p: return ["samba"]
+    if "hiphop" in p or "hip-hop" in p: return ["hiphop"]
+    if "afrocuban" in p or "rumba" in p or "clave" in p: return ["afrocubano"]
+    if "choro" in p: return ["choro"]
+    return []  # sin etiqueta -> vector cero (neutro)
+
 def make_XY_from_bars(bars_encoded):
     """
     bars_encoded: lista de np.arrays shape (16,), enteros ids.
@@ -175,14 +186,26 @@ def main(groove_dir: Path, out_dir: Path, steps_per_bar=16, save_vocab=True):
 
     # 4) Re-encodea y guarda X/Y por split
     for split in ["train", "validation", "test"]:
+        
         pack = np.load(out_dir / f"{split}_bitmasks.npz", allow_pickle=True)
-        bars_bitmasks = pack["bars"]
+        bars_bitmasks = pack["bars"]  # lista de arrays de 16 bitmasks
+
         bars_encoded = [encode_tokens(tokens_16, vocab) for tokens_16 in bars_bitmasks]
         X, Y = make_XY_from_bars(bars_encoded)
 
-        # Vector de estilos g: si no hay mapeo en info.csv, guarda dummy ceros
-        # shape (N, 6) -> Jazz, Choro, Bossa, Samba, HipHop, AfroCuban
-        G = np.zeros((X.shape[0], 6), dtype=np.float32)
+        # Vector de estilos
+        STYLE_LIST = ["jazz","bossa","samba","hiphop","afrocubano","choro"]
+        IDX = {name:i for i,name in enumerate(STYLE_LIST)}
+
+        # Creamos G a partir de la ruta original (guarda una lista paralela de paths al recolectar observed)
+        try:
+            paths = np.load(out_dir / f"{split}_paths.npy", allow_pickle=True)
+            G = np.zeros((X.shape[0], len(STYLE_LIST)), dtype=np.float32)
+            for i, src in enumerate(paths[:len(G)]):
+                for tag in infer_style_from_path(str(src)):
+                    G[i, IDX[tag]] = 1.0
+        except:
+            G = np.zeros((X.shape[0], len(STYLE_LIST)), dtype=np.float32)
 
         np.savez_compressed(out_dir / f"{split}.npz",
                             X_tokens=X, Y_tokens=Y, X_style=G)

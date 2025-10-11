@@ -129,55 +129,32 @@ def main(
         return loss, acc
 
     def train_epoch(epoch):
-        eps = epsilon(epoch, ss_start, ss_end, ss_max)
+        eps = epsilon(epoch, ss_start, ss_end, ss_max)  # prob. de usar predicción
         tr_loss, tr_acc, n_batches = 0.0, 0.0, 0
 
         for (x_tokens, x_pos, x_style), y_true in tr:
-            # 1) Construir inputs con scheduled sampling (sin gradientes)
-            #    T = longitud de secuencia (16)
-            x_tokens_ss = tf.identity(x_tokens)  # (B,T)
-            T_local = tf.shape(x_tokens_ss)[1]
+            B = tf.shape(x_tokens)[0]
+            T_local = tf.shape(x_tokens)[1]
 
-            # loop por paso temporal, SOLO para ir reemplazando la entrada de ese paso
-            # usando el token predicho con prob eps
-            t0 = tf.constant(0, dtype=tf.int32)
-            cond = lambda t, x_cur: tf.less(t, T_local)
+            # ── Paso A: forward teacher-forced (sin gradiente) ──
+            y_pred_teacher = model([x_tokens, x_pos, x_style], training=False)   # (B,T,V)
+            pred_ids = tf.argmax(y_pred_teacher, axis=-1, output_type=tf.int32)  # (B,T)
 
-            def body(t, x_cur):
-                # forward sin gradiente para obtener pred en paso t
-                y_step = model([x_cur, x_pos, x_style], training=False)  # (B,T,V)
-                probs_t = y_step[:, t, :]                                 # (B,V)
-                pred_t  = tf.argmax(probs_t, axis=-1, output_type=tf.int32)   # (B,)
+            # ── Paso B: construir x_tokens_ss con máscara Bernoulli(eps) vectorizada ──
+            # máscara True => usar predicción; False => usar token real
+            mask = tf.random.uniform(tf.shape(x_tokens), 0.0, 1.0) < eps         # (B,T) bool
+            x_tokens_ss = tf.where(mask, tf.cast(pred_ids, x_tokens.dtype), x_tokens)
 
-                # Bernoulli(eps): reemplaza input[t] por predicho con prob eps
-                m = tf.cast(tf.random.uniform(tf.shape(pred_t)) < eps, tf.int32)
-                xt = tf.cast(x_cur[:, t], tf.int32)
-                new_t = m * pred_t + (1 - m) * xt
-
-                idx = tf.stack([
-                    tf.range(tf.shape(new_t)[0], dtype=tf.int32),
-                    tf.fill([tf.shape(new_t)[0]], t)
-                ], axis=1)
-
-                x_next = tf.tensor_scatter_nd_update(
-                    x_cur,
-                    idx,
-                    tf.cast(new_t, x_cur.dtype)
-                )
-                return t + 1, x_next
-
-            _, x_tokens_ss = tf.while_loop(cond, body, [t0, x_tokens_ss], parallel_iterations=1)
-
-            # 2) Una sola pasada con gradientes para calcular loss y actualizar
+            # ── Paso C: forward de entrenamiento + loss + update (una sola vez) ──
             with tf.GradientTape() as tape:
-                y_pred = model([x_tokens_ss, x_pos, x_style], training=True)  # (B,T,V)
+                y_pred = model([x_tokens_ss, x_pos, x_style], training=True)     # (B,T,V)
 
                 if cw_vec is not None:
                     V = tf.shape(y_pred)[-1]
-                    y_oh = tf.one_hot(tf.cast(y_true, tf.int32), depth=V)     # (B,T,V)
+                    y_oh = tf.one_hot(tf.cast(y_true, tf.int32), depth=V)        # (B,T,V)
                     p = tf.clip_by_value(y_pred, 1e-7, 1.0)
-                    ce = -tf.reduce_sum(y_oh * tf.math.log(p), axis=-1)       # (B,T)
-                    w = tf.gather(tf.constant(cw_vec, dtype=tf.float32), y_true)  # (B,T)
+                    ce = -tf.reduce_sum(y_oh * tf.math.log(p), axis=-1)          # (B,T)
+                    w = tf.gather(tf.constant(cw_vec, dtype=tf.float32), y_true) # (B,T)
                     loss = tf.reduce_mean(ce * w)
                 else:
                     loss = tf.reduce_mean(loss_fn(y_true, y_pred))

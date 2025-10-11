@@ -131,44 +131,65 @@ def main(
     def train_epoch(epoch):
         eps = epsilon(epoch, ss_start, ss_end, ss_max)
         tr_loss, tr_acc, n_batches = 0.0, 0.0, 0
-        for (x_tokens, x_pos, x_style), y_true in tr:
-            # scheduled sampling: vamos reemplazando posiciones 0..T-1
-            x_tokens_ss = tf.identity(x_tokens)
-            for t in range(T):
-                with tf.GradientTape() as tape:
-                    y_pred = model([x_tokens_ss, x_pos, x_style], training=True)  # (B,T,V)
-                    # pred en t
-                    probs_t = y_pred[:, t, :]                                  # (B,V)
-                    pred_t  = tf.argmax(probs_t, axis=-1, output_type=tf.int32) # (B,)
-                    # máscara Bernoulli(eps) por batch
-                    m = tf.cast(tf.random.uniform(tf.shape(pred_t), 0, 1) < eps, tf.int32)
-                    # reemplaza input[t] con predicho si m=1
-                    xt = x_tokens_ss[:, t]
-                    x_tokens_ss = tf.tensor_scatter_nd_update(
-                        x_tokens_ss, indices=tf.stack([tf.range(tf.shape(xt)[0]), tf.fill([tf.shape(xt)[0]], t)], axis=1),
-                        updates=(m * pred_t + (1 - m) * xt)
-                    )
-                    # Al final del último paso calculamos la loss completa (sobre Y)
-                    if t == T-1:
-                        # class weights por token (opcional)
-                        if cw_vec is not None:
-                            # y_true: (B,T) → pesos (B,T) según id de y_true
-                            w = tf.gather(tf.constant(cw_vec, dtype=tf.float32), y_true)
-                            # CE por token
-                            V = tf.shape(y_pred)[-1]
-                            y_oh = tf.one_hot(tf.cast(y_true, tf.int32), depth=V)
-                            p = tf.clip_by_value(y_pred, 1e-7, 1.0)
-                            ce = -tf.reduce_sum(y_oh * tf.math.log(p), axis=-1)  # (B,T)
-                            loss = tf.reduce_mean(ce * w)
-                        else:
-                            loss = tf.reduce_mean(loss_fn(y_true, y_pred))
-                grads = tape.gradient(loss, model.trainable_variables)
-                optimizer.apply_gradients(zip(grads, model.trainable_variables))
 
-            # métricas al terminar el T-loop
+        for (x_tokens, x_pos, x_style), y_true in tr:
+            # 1) Construir inputs con scheduled sampling (sin gradientes)
+            #    T = longitud de secuencia (16)
+            x_tokens_ss = tf.identity(x_tokens)  # (B,T)
+            T_local = tf.shape(x_tokens_ss)[1]
+
+            # loop por paso temporal, SOLO para ir reemplazando la entrada de ese paso
+            # usando el token predicho con prob eps
+            t0 = tf.constant(0, dtype=tf.int32)
+            cond = lambda t, x_cur: tf.less(t, T_local)
+
+            def body(t, x_cur):
+                # forward sin gradiente para obtener pred en paso t
+                y_step = model([x_cur, x_pos, x_style], training=False)  # (B,T,V)
+                probs_t = y_step[:, t, :]                                 # (B,V)
+                pred_t  = tf.argmax(probs_t, axis=-1, output_type=tf.int32)   # (B,)
+
+                # Bernoulli(eps): reemplaza input[t] por predicho con prob eps
+                m = tf.cast(tf.random.uniform(tf.shape(pred_t)) < eps, tf.int32)
+                xt = tf.cast(x_cur[:, t], tf.int32)
+                new_t = m * pred_t + (1 - m) * xt
+
+                idx = tf.stack([
+                    tf.range(tf.shape(new_t)[0], dtype=tf.int32),
+                    tf.fill([tf.shape(new_t)[0]], t)
+                ], axis=1)
+
+                x_next = tf.tensor_scatter_nd_update(
+                    x_cur,
+                    idx,
+                    tf.cast(new_t, x_cur.dtype)
+                )
+                return t + 1, x_next
+
+            _, x_tokens_ss = tf.while_loop(cond, body, [t0, x_tokens_ss], parallel_iterations=1)
+
+            # 2) Una sola pasada con gradientes para calcular loss y actualizar
+            with tf.GradientTape() as tape:
+                y_pred = model([x_tokens_ss, x_pos, x_style], training=True)  # (B,T,V)
+
+                if cw_vec is not None:
+                    V = tf.shape(y_pred)[-1]
+                    y_oh = tf.one_hot(tf.cast(y_true, tf.int32), depth=V)     # (B,T,V)
+                    p = tf.clip_by_value(y_pred, 1e-7, 1.0)
+                    ce = -tf.reduce_sum(y_oh * tf.math.log(p), axis=-1)       # (B,T)
+                    w = tf.gather(tf.constant(cw_vec, dtype=tf.float32), y_true)  # (B,T)
+                    loss = tf.reduce_mean(ce * w)
+                else:
+                    loss = tf.reduce_mean(loss_fn(y_true, y_pred))
+
+            grads = tape.gradient(loss, model.trainable_variables)
+            optimizer.apply_gradients(zip(grads, model.trainable_variables))
+
             acc = tf.reduce_mean(tf.keras.metrics.sparse_categorical_accuracy(y_true, y_pred))
             tr_loss += float(loss); tr_acc += float(acc); n_batches += 1
-        return tr_loss/n_batches, tr_acc/n_batches
+
+        return tr_loss / n_batches, tr_acc / n_batches
+
 
     best_val = 1e9
     patience = patience_es

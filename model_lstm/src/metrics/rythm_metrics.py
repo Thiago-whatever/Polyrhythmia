@@ -38,3 +38,17 @@ def perplexity(y_true, y_pred):
     # ce shape: (batch, steps) -> media
     ce_mean = tf.reduce_mean(ce)
     return tf.exp(ce_mean)
+
+def density(M):   # M: (T,9)
+    return float((M.sum(axis=1) > 0).mean())
+
+def syncopation(M):
+    T = M.shape[0]
+    on  = M[::2].sum() / max(1, M[::2].size)
+    off = M[1::2].sum() / max(1, M[1::2].size)
+    return float(off / (on + 1e-6))
+
+def cooccurrence(M):
+    C = (M.T @ M) / M.shape[0]  # (9,9)
+    return C
+

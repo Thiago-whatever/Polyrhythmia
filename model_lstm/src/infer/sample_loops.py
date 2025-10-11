@@ -74,7 +74,21 @@ def main():
     ap.add_argument("--start_token", type=int, default=0)
     ap.add_argument("--seed", type=int, default=None)
     ap.add_argument("--out_json", default="samples_bars.jsonl", help="Salida JSONL (1 línea = lista de 16 ids)")
+    ap.add_argument("--styles_on", default="", help="CSV de estilos activos por nombre o idx, e.g. jazz,afrocubano")
     args = ap.parse_args()
+
+    style_vec = np.zeros((1, args.styles), dtype=np.float32)
+    if args.styles_on:
+        names = [s.strip() for s in args.styles_on.split(",") if s.strip()]
+        # si pasas nombres, mapea a índices; o permite pasar "0,3"
+        for n in names:
+            try:
+                idx = int(n)
+            except:
+                # mapea por nombre si tienes lista ordenada en la app
+                name2idx = {"jazz":0,"bossa":1,"samba":2,"hiphop":3,"afrocubano":4,"choro":5}
+                idx = name2idx.get(n.lower(), None)
+            if idx is not None and 0 <= idx < args.styles: style_vec[0, idx] = 1.0
 
     # Cargar modelo (sin recompilar)
     model = tf.keras.models.load_model(args.model_path, compile=False)

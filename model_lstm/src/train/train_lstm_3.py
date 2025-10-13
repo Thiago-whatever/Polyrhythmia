@@ -120,6 +120,7 @@ def main(
     # Entrenamiento con Scheduled Sampling (iterativo T veces, T=16)
     optimizer = model.optimizer
     loss_fn = model.loss  # SparseCELS con LS
+    label_smoothing = 0.1
 
     @tf.function
     def step_val(x_tokens, x_pos, x_style, y_true):
@@ -133,15 +134,11 @@ def main(
         tr_loss, tr_acc, n_batches = 0.0, 0.0, 0
 
         for (x_tokens, x_pos, x_style), y_true in tr:
-            B = tf.shape(x_tokens)[0]
-            T_local = tf.shape(x_tokens)[1]
-
             # ── Paso A: forward teacher-forced (sin gradiente) ──
             y_pred_teacher = model([x_tokens, x_pos, x_style], training=False)   # (B,T,V)
             pred_ids = tf.argmax(y_pred_teacher, axis=-1, output_type=tf.int32)  # (B,T)
 
             # ── Paso B: construir x_tokens_ss con máscara Bernoulli(eps) vectorizada ──
-            # máscara True => usar predicción; False => usar token real
             mask = tf.random.uniform(tf.shape(x_tokens), 0.0, 1.0) < eps         # (B,T) bool
             x_tokens_ss = tf.where(mask, tf.cast(pred_ids, x_tokens.dtype), x_tokens)
 
@@ -149,15 +146,22 @@ def main(
             with tf.GradientTape() as tape:
                 y_pred = model([x_tokens_ss, x_pos, x_style], training=True)     # (B,T,V)
 
+                # --- Sparse CE con label smoothing manual (compatible TF viejos) ---
+                V = tf.shape(y_pred)[-1]
+                y_oh = tf.one_hot(tf.cast(y_true, tf.int32), depth=V)            # (B,T,V)
+                smooth_positives = 1.0 - label_smoothing
+                smooth_negatives = label_smoothing / tf.cast(V, tf.float32)
+                y_oh_smooth = y_oh * smooth_positives + smooth_negatives
+
+                p = tf.clip_by_value(y_pred, 1e-7, 1.0)
+                ce = -tf.reduce_sum(y_oh_smooth * tf.math.log(p), axis=-1)       # (B,T)
+                loss_tok = ce
+
                 if cw_vec is not None:
-                    V = tf.shape(y_pred)[-1]
-                    y_oh = tf.one_hot(tf.cast(y_true, tf.int32), depth=V)        # (B,T,V)
-                    p = tf.clip_by_value(y_pred, 1e-7, 1.0)
-                    ce = -tf.reduce_sum(y_oh * tf.math.log(p), axis=-1)          # (B,T)
                     w = tf.gather(tf.constant(cw_vec, dtype=tf.float32), y_true) # (B,T)
-                    loss = tf.reduce_mean(ce * w)
+                    loss = tf.reduce_mean(loss_tok * w)
                 else:
-                    loss = tf.reduce_mean(loss_fn(y_true, y_pred))
+                    loss = tf.reduce_mean(loss_tok)
 
             grads = tape.gradient(loss, model.trainable_variables)
             optimizer.apply_gradients(zip(grads, model.trainable_variables))
@@ -166,6 +170,7 @@ def main(
             tr_loss += float(loss); tr_acc += float(acc); n_batches += 1
 
         return tr_loss / n_batches, tr_acc / n_batches
+
 
 
     best_val = 1e9

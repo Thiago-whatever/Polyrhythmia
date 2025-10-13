@@ -106,7 +106,7 @@ def main(
         ReduceLROnPlateau(factor=0.5, patience=patience_rlr, min_lr=1e-5, monitor="val_loss"),
         TensorBoard(log_dir=str(log_dir)),
         CSVLogger(str(log_dir / "training_log.csv")),
-        ModelCheckpoint(filepath=str(P.Path(ckpt_dir) / "best_3.h5"),
+        ModelCheckpoint(filepath=str(P.Path(ckpt_dir) / "best_3.keras"),
                         monitor="val_loss", save_best_only=True)
     ]
 
@@ -194,14 +194,14 @@ def main(
                 print("[INFO] EarlyStopping."); break
 
     # Carga best y eval test
-    best = tf.keras.models.load_model(P.Path(ckpt_dir) / "best_3.h5",
+    best = tf.keras.models.load_model(P.Path(ckpt_dir) / "best_3.keras",
                                       custom_objects={"SparseCELS": SparseCELS})
     pos_te_tf = tf.convert_to_tensor(pos_te, dtype=tf.int32)
     Z_te_tf   = tf.convert_to_tensor(Z_te, dtype=tf.float32)
     test_metrics = best.evaluate([X_te, pos_te_tf, Z_te_tf], Y_te, verbose=1)
     print("[INFO] Test:", dict(zip(best.metrics_names, test_metrics)))
 
-    best.save(final_path)
+    best.save(final_path.replace(".h5", ".keras"))
     with open(P.Path(runs_dir) / exp_id / "hparams.json", "w", encoding="utf-8") as f:
         json.dump({
             "vocab_size": int(vocab_size),
@@ -212,7 +212,7 @@ def main(
             "vocab_cap": int(vocab_cap),
             "scheduled_sampling": {"start": ss_start, "end": ss_end, "max": ss_max},
         }, f, indent=2)
-    print(f"[OK] Guardado: {final_path}")
+    print(f"[OK] Guardado: {final_path.replace('.h5', '.keras')}")
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()

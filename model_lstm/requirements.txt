@@ -1,0 +1,17 @@
+# Core ML
+tensorflow==2.13.0
+tensorflow-datasets==4.9.4
+
+# MIDI / Audio utils
+pretty_midi==0.2.10
+mido==1.3.0
+
+# Numerics / Utils
+numpy==1.24.3
+pandas==1.5.3
+tqdm==4.66.1
+pyyaml==6.0.1
+matplotlib==3.7.3
+
+# guardado moderno de modelos Keras
+h5py==3.9.0

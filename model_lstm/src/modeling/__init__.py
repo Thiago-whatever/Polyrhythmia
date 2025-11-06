@@ -1,0 +1,1 @@
+from .model_lstm_2 import build_lstm_model_2

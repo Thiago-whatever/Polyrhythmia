@@ -1,0 +1,13 @@
+{
+  "vocab_size": 128,
+  "batch_size": 192,
+  "epochs": 100,
+  "seq_len": 16,
+  "use_class_weights": true,
+  "vocab_cap": 128,
+  "scheduled_sampling": {
+    "start": 1,
+    "end": 10,
+    "max": 0.2
+  }
+}

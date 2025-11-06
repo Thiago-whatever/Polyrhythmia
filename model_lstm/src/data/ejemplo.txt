@@ -1,0 +1,12 @@
+from src.data.data_loader import DataLoader
+
+# Cargar config desde YAML
+loader = DataLoader("configs/config_base.yaml")
+
+# Datasets
+train_ds = loader.get_tf_dataset("train", batch_size=64)
+val_ds = loader.get_tf_dataset("val", batch_size=64)
+test_ds = loader.get_tf_dataset("test", batch_size=64)
+
+# vocab_size dinámico
+vocab_size = loader.num_classes

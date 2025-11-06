@@ -1,0 +1,7 @@
+# TensorFlow 2.13 suele requerir estas bandas
+protobuf<4.0.0
+keras<2.14.0
+astunparse<1.7.0
+wrapt<1.15.0
+opt_einsum<3.4.0
+typing_extensions>=4.5.0

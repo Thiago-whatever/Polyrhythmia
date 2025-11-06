@@ -1,0 +1,26 @@
+training:
+  batch_size: 192
+  epochs: 100
+  patience_es: 12
+  patience_rlr: 4
+  vocab_cap: 128          # si usas vocab_topN
+  use_class_weights: true # o focal_loss
+  focal:
+    enabled: false
+    gamma: 1.5
+
+scheduled_sampling:
+  start_epoch: 1
+  end_epoch: 10
+  max_prob: 0.20
+
+model:
+  token_emb: 128
+  pos_emb: 16
+  style_dim: 32
+  lstm_units: [384, 384]
+  dropout: 0.35
+  recurrent_dropout: 0.10
+  l2_dense: 2.0e-5
+  lr: 1.0e-3
+  label_smoothing: 0.12

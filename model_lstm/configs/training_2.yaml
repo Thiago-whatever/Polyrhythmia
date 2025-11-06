@@ -1,0 +1,38 @@
+experiment_name: lstm_improved
+
+dataset:
+  train: "data/processed/dataset_2/train.npz"
+  val:   "data/processed/dataset_2/validation.npz"
+  test:  "data/processed/dataset_2/test.npz"
+  vocab: "data/processed/dataset_2/vocab.json"
+  max_seq_len: 16
+  num_classes: 166
+
+
+model:
+  embedding_dim: 128
+  lstm_units: 384
+  lstm_layers: 2
+  dropout: 0.3
+  recurrent_dropout: 0.1
+  vocab_size: 512    # limitar combinaciones a las más frecuentes
+  positional_embedding: true   # añade embedding 1..16 pasos
+  style_embedding: true        # embedding para condicionamiento de género
+
+training:
+  batch_size: 128
+  epochs: 80
+  optimizer: adam
+  learning_rate: 0.001
+  clipnorm: 1.0
+  label_smoothing: 0.05
+  loss: sparse_categorical_crossentropy
+
+callbacks:
+  early_stopping:
+    patience: 10
+    restore_best_weights: true
+  reduce_lr:
+    factor: 0.5
+    patience: 4
+    min_lr: 1e-5

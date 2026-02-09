@@ -21,7 +21,7 @@ Together, they form a complete AI-assisted rhythm creation environment — bridg
 ## 🧠 System Architecture
 
 <p align="center">
-  <img src="https://i.imgur.com/GnKeWUE.png" width="750">
+   <img width="706" height="342" alt="image" src="https://github.com/user-attachments/assets/ea442dfe-9a68-4526-b453-8fd14af5fcb8" />
 </p>
 
 | Component | Description |
@@ -92,7 +92,7 @@ All training and generation notebooks are in `model_lstm/` and `midi_experiments
 ## 🖥️ Polyrhythmia UI
 
 <p align="center">
-  <img src="https://i.imgur.com/cyO1tUq.png" width="700"/>
+   <img width="710" height="399" alt="image" src="https://github.com/user-attachments/assets/6f52fcc5-de52-416b-9e29-0450a47a02c8" />
 </p>
 
 The **UI component** (in `/Polyrhythmia_UI/Polyrhythmia-ui`) provides a front-end built with **React** and **Web Audio API** for interactive rhythmic exploration.
@@ -202,7 +202,7 @@ npm start
 ## 📬 Contact
 
 * **Author:** Santiago Flores-Larrondo
-* **Affiliation:** ITAM / Mexico's Central Bank
+* **Affiliation:** ITAM
 * **Email:** [[s.flores.l@outlook.com](mailto:s.flores.l@outlook.com)]
 * **GitHub:** [@Thiago-whatever]((https://github.com/Thiago-whatever))
 

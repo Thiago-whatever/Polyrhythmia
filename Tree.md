@@ -1,0 +1,200 @@
+Polyrhythmia - Estructura de carpetas
+=====================================
+
+Raíz: Polyrhythmia/
+
+- .gitignore
+- README.md
+- .vscode/
+  - settings.json
+- experiments/
+  - 2025-10-12_eval/
+- midi_experiments/
+  - bateria1.mid
+  - billie_jean_drum_30s.mid
+  - cumbia_del_amor.mid
+  - drum_loop.mid
+  - exp1.ipynb
+  - exp2.ipynb
+- model_lstm/  (DETALLE COMPLETO ABAJO)
+- music21_experiments/
+  - DeepGroovySounds.mid
+  - exp1.ipynb
+  - exp2.ipynb
+  - exp3.ipynb
+  - exp4.ipynb
+- Polyrhytmia_UI/
+  - Polyrhytmia-ui/  (DETALLE ABAJO)
+
+
+Detalle completo de model_lstm/
+--------------------------------
+
+model_lstm/
+- .gitignore
+- .ipynb_checkpoints/
+- configs/
+  - dataset.yaml
+  - dataset_2.yaml
+  - dataset_3.yaml
+  - training.yaml
+  - training_2.yaml
+  - training_3.yaml
+- constraints.txt
+- data/
+  - external/
+  - interim/
+  - processed/
+    - test_bitmasks.npz
+    - test.npz
+    - train_bitmasks.npz
+    - train.npz
+    - validation_bitmasks.npz
+    - validation.npz
+    - vocab.json
+    - dataset_2/
+    - dataset_3/
+  - raw/
+    - groove/
+- experiments/
+  - 2025-10-12_eval/
+    - model_eval_reports.json
+    - figures/
+- logs/
+  - tensorboard/
+    - train/
+    - validation/
+- models/
+  - checkpoints/
+    - best.h5
+  - checkpoints_improved/
+    - best_2.h5
+    - best_3.h5
+  - checkpoints_improved_ls010_do035_vocab128/
+    - best_2.h5
+  - final/
+    - best_2_ls010_do035_vocab128.h5
+    - best_2.h5
+    - best_3.h5
+    - best.h5
+- outputs/
+  - samples_bars.jsonl
+  - samples_bars.mid
+  - temp_preview.mid
+  - 2025-10-15/
+    - dataset1_sf2_demo/
+    - model1_sf2_gen/
+    - polyrhythm_samples_model1/
+  - 2025-10-16/
+    - model1_sf2_gen/
+  - 2025-10-21/
+    - model3/
+  - 2025-10-22/
+    - model3/
+  - 2025-11-02/
+    - model3/
+  - 2025-11-05/
+    - model3/
+  - 2025-11-12/
+    - model3/
+  - gen_model2/
+    - audio_wav/
+- pyproject.toml
+- README.md
+- requirements.txt
+- runs/
+  - baseline/
+  - genre_sched/
+    - 20251011_135441/
+    - 20251011_135850/
+    - 20251011_140050/
+    - 20251011_141619/
+    - 20251012_181057/
+  - genre_sched_v2/
+    - 20251012_183142/
+    - 20251012_183350/
+    - 20251012_183525/
+    - 20251012_183807/
+  - improved/
+    - 20251003_081100/
+    - 20251005_211242/
+    - ...
+  - improved_ls010_do035_vocab128/
+- src/    (SUPER-DETALLADO)
+  - __init__.py
+  - __pycache__/
+  - data/
+    - all_data.py
+    - augment.py
+    - data_loader.py
+    - ejemplo.txt
+    - quantize_and_tokenize.py
+    - __pycache__/
+  - infer/
+    - sample_loops.py
+    - __pycache__/
+  - metrics/
+    - rythm_metrics.py
+    - __pycache__/
+  - modeling/
+    - model_lstm.py
+    - model_lstm_2.py
+    - model_lstm_3.py
+    - __init__.py
+    - __pycache__/
+  - notebooks/
+    - .ipynb_checkpoints/
+    - 00_model_eval.ipynb
+    - 01_gen_polyrhythm_sample.ipynb
+    - 02_audio_with_soundfont.ipynb
+    - 03_gen_with_soundfont_model1.ipynb
+    - 04_gen_with_soundfont_model2.ipynb
+    - 05_gem_with_soundfont_model3.ipynb
+    - experiments/
+  - train/
+    - train_lstm.py
+    - train_lstm_2.py
+    - train_lstm_3.py
+    - __pycache__/
+  - utils/
+    - build_vocab_topN.py
+    - export_to_midi.py
+    - __pycache__/
+
+
+Detalle de Polyrhytmia_UI/Polyrhytmia-ui/
+-----------------------------------------
+
+Polyrhytmia_UI/
+- Polyrhytmia-ui/
+  - .gitignore
+  - eslint.config.js
+  - index.html
+  - node_modules/
+  - package-lock.json
+  - package.json
+  - public/
+    - vite.svg
+  - README.md
+  - src/
+    - App.jsx
+    - main.jsx
+    - index.css
+    - assets/
+      - react.svg
+    - components/
+      - Controls.jsx
+      - MusicalSlider.jsx
+      - Select.jsx
+      - Sliders.jsx
+      - Toast.jsx
+      - WaveForm.jsx
+    - hooks/    (vacío)
+    - pages/
+      - MainPage.jsx
+    - themes/
+    - utils/
+  - vite.config.js
+
+
+Fin de Tree

@@ -101,6 +101,12 @@ def main(
     exp_id = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     log_dir = P.Path(runs_dir) / exp_id
     log_dir.mkdir(parents=True, exist_ok=True)
+
+    writer = tf.summary.create_file_writer(str(log_dir))
+    csv_path = log_dir / "training_log.csv"
+    with open(csv_path, "w", encoding="utf-8") as f:
+        f.write("epoch,loss,lr,perplexity,sparse_categorical_accuracy,val_loss,val_perplexity,val_sparse_categorical_accuracy\n")
+
     cbs = [
         EarlyStopping(patience=patience_es, restore_best_weights=True, monitor="val_loss"),
         ReduceLROnPlateau(factor=0.5, patience=patience_rlr, min_lr=1e-5, monitor="val_loss"),
@@ -184,6 +190,28 @@ def main(
             vl += float(l); va_acc += float(a); n += 1
         vl /= n; va_acc /= n
         print(f"[E{epoch:03d}] train_loss={tl:.4f} train_acc={ta:.4f} | val_loss={vl:.4f} val_acc={va_acc:.4f}")
+
+        # perplexity (si quieres)
+        tr_ppl = float(tf.exp(tf.constant(tl, dtype=tf.float32)).numpy())
+        va_ppl = float(tf.exp(tf.constant(vl, dtype=tf.float32)).numpy())
+
+        lr = float(tf.keras.backend.get_value(model.optimizer.lr))
+
+        # TensorBoard scalars
+        with writer.as_default():
+            tf.summary.scalar("epoch_loss", tl, step=epoch)
+            tf.summary.scalar("epoch_sparse_categorical_accuracy", ta, step=epoch)
+            tf.summary.scalar("epoch_perplexity", tr_ppl, step=epoch)
+
+            tf.summary.scalar("val_epoch_loss", vl, step=epoch)
+            tf.summary.scalar("val_epoch_sparse_categorical_accuracy", va_acc, step=epoch)
+            tf.summary.scalar("val_epoch_perplexity", va_ppl, step=epoch)
+
+        writer.flush()
+
+        # CSV
+        with open(csv_path, "a", encoding="utf-8") as f:
+            f.write(f"{epoch},{tl},{lr},{tr_ppl},{ta},{vl},{va_ppl},{va_acc}\n")
 
         # callbacks “manuales” básicos
         # (mantengo ReduceLROnPlateau solo con val_loss)

@@ -1,0 +1,32 @@
+[
+  {
+    "modelo": "LSTM-1 (baseline)",
+    "train_loss": 1.2449431419372559,
+    "val_loss": 1.5588678121566772,
+    "train_acc": 0.6265748739242554,
+    "val_acc": 0.5409867167472839,
+    "val_perplexity": 4.850010871887207,
+    "params": 265510,
+    "early_stopping": "val_loss, patience=7 (epoch exacto: N/A, logs no persistidos)"
+  },
+  {
+    "modelo": "LSTM-2 (improved)",
+    "train_loss": 1.5466525554656982,
+    "val_loss": 1.8864593505859375,
+    "train_acc": 0.6497805714607239,
+    "val_acc": 0.5531168580055237,
+    "val_perplexity": 4.891733646392822,
+    "params": 2091502,
+    "early_stopping": "val_loss, patience=12 (default) (epoch exacto: N/A, logs no persistidos)"
+  },
+  {
+    "modelo": "LSTM-3 (genre_sched)",
+    "train_loss": 4.178321361541748,
+    "val_loss": 4.099257946014404,
+    "train_acc": 0.09782345592975616,
+    "val_acc": 0.08273498713970184,
+    "val_perplexity": 60.295528455362074,
+    "params": 2109040,
+    "early_stopping": "manual val_loss, patience=12 (default) (epoch exacto: N/A, logs no persistidos)"
+  }
+]
